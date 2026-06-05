@@ -1,0 +1,42 @@
+name: Docker Image CI
+on:
+  push:
+    branches: [ master ]
+    paths-ignore:
+        - '**.md'             
+        - '.github/**'
+        - 'docker-compose.yaml'
+  workflow_dispatch:  
+    inputs:
+      sonar_version:
+        description: 'SonarQube version'
+        required: false
+        default: '26.5.0.122743-community'
+
+env:
+  SONAR_VERSION: "26.5.0.122743-community"
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      -
+        name: Docker Login
+        uses: docker/login-action@v1.10.0
+        with:
+          username: ${{ secrets.DOCKER_LOGIN }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+        
+      - 
+        name: checkout
+        uses: actions/checkout@v2
+      
+      - 
+        name: Build the Docker image
+        run: |
+          docker build . --file ./Dockerfile --tag andrshat/sonarqube-1c:$SONAR_VERSION
+          docker push andrshat/sonarqube-1c:$SONAR_VERSION
+

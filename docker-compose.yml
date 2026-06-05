@@ -1,0 +1,61 @@
+services:
+  postgresql:
+    restart: always
+    image: postgres:17
+    networks:
+      - sonarnetwork
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+    volumes:
+      - ./postgresql_data:/var/lib/postgresql/data
+  sonar:
+    restart: always
+    image: andrshat/sonarqube-1c:26.5.0.122743-community
+    ports:
+      - "32772:9000"
+    depends_on:
+      - postgresql
+    ulimits:
+      nofile:
+        soft: 131072
+        hard: 131072
+      nproc:
+        soft: 8192
+        hard: 8192
+    networks:
+      - sonarnetwork
+    environment:
+      - SONAR_WEB_JAVAOPTS=-server -Xms512m -Xmx512m -XX:+HeapDumpOnOutOfMemoryError
+      - SONAR_CE_JAVAOPTS=-Xms1g -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
+      - SONAR_SEARCH_JAVAOPTS=-Xms1g -Xmx1g -XX:+HeapDumpOnOutOfMemoryError
+      - SONAR_JDBC_URL=jdbc:postgresql://postgresql:5432/sonar
+      - SONAR_JDBC_USERNAME=sonar
+      - SONAR_JDBC_PASSWORD=sonar
+    volumes:
+      - sonarqube_conf:/opt/sonarqube/conf
+      - sonarqube_data:/opt/sonarqube/data
+        #- sonarqube_extensions:/opt/sonarqube/extensions
+networks:
+  sonarnetwork:
+    driver: bridge
+volumes:
+  sonarqube_conf:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/sonarqube_conf
+  sonarqube_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/sonarqube_data
+#  sonarqube_extensions:
+#    driver: local
+#    driver_opts:
+#      type: none
+#      o: bind
+#      device: ${PWD}/sonarqube_extensions
+
